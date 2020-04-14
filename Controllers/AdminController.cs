@@ -28,6 +28,34 @@ namespace Slagkraft.Controllers
 
         #region Public Methods
 
+        [HttpPost("{code}/questions-create-multiplechoice")]
+        public void CreateMultipleChoice(int code, [FromBody]MultipleChoice question)
+        {
+            if (ActiveSessions.Instance.Sessions.TryGetValue(code, out AdminInstance admin))
+            {
+                ThreadPool.QueueUserWorkItem(o => admin.AddQuestion(question));
+                HttpContext.Response.StatusCode = 201;
+            }
+            else
+            {
+                HttpContext.Response.StatusCode = 404;
+            }
+        }
+
+        [HttpPost("{code}/questions-create-opentext")]
+        public void CreateOpenText(int code, [FromBody]OpenText question)
+        {
+            if (ActiveSessions.Instance.Sessions.TryGetValue(code, out AdminInstance admin))
+            {
+                ThreadPool.QueueUserWorkItem(o => admin.AddQuestion(question));
+                HttpContext.Response.StatusCode = 201;
+            }
+            else
+            {
+                HttpContext.Response.StatusCode = 404;
+            }
+        }
+
         [HttpPost("create")]
         public async Task CreateSession([FromBody]Session data)
         {
@@ -59,7 +87,7 @@ namespace Slagkraft.Controllers
         [HttpGet("{code}/questions-{index}")]
         public QuestionBase GetQuestion(int code, int index)
         {
-            if (_context.Active.Sessions.TryGetValue(code, out AdminInstance admin))
+            if (ActiveSessions.Instance.Sessions.TryGetValue(code, out AdminInstance admin))
             {
                 HttpContext.Response.StatusCode = 202;
                 switch (admin.Questions[index].QuestionType)
@@ -82,7 +110,7 @@ namespace Slagkraft.Controllers
         [HttpGet("{code}/questions-all")]
         public IEnumerable<QuestionBase> GetQuestions(int code)
         {
-            if (_context.Active.Sessions.TryGetValue(code, out AdminInstance admin))
+            if (ActiveSessions.Instance.Sessions.TryGetValue(code, out AdminInstance admin))
             {
                 HttpContext.Response.StatusCode = 202;
                 return admin.Questions;
@@ -157,10 +185,10 @@ namespace Slagkraft.Controllers
             return sessions;
         }
 
-        [HttpGet("{code}/slides-all")]
-        public IEnumerable<QuestionBase> GetSlides(int code)
+        [HttpGet("{code}/slides-{index}")]
+        public IEnumerable<QuestionBase> GetSlide(int code, int index)
         {
-            if (_context.Active.Sessions.TryGetValue(code, out AdminInstance admin))
+            if (ActiveSessions.Instance.Sessions.TryGetValue(code, out AdminInstance admin))
             {
                 HttpContext.Response.StatusCode = 202;
                 return admin.Questions;
@@ -172,10 +200,10 @@ namespace Slagkraft.Controllers
             }
         }
 
-        [HttpGet("{code}/slides-{index}")]
-        public IEnumerable<QuestionBase> GetSlides(int code, int index)
+        [HttpGet("{code}/slides-all")]
+        public IEnumerable<QuestionBase> GetSlides(int code)
         {
-            if (_context.Active.Sessions.TryGetValue(code, out AdminInstance admin))
+            if (ActiveSessions.Instance.Sessions.TryGetValue(code, out AdminInstance admin))
             {
                 HttpContext.Response.StatusCode = 202;
                 return admin.Questions;

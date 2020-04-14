@@ -23,6 +23,18 @@ namespace Slagkraft.Models.Admin
 
         #endregion Public Properties
 
+        #region Public Constructors
+
+        public AdminInstance()
+        {
+            Active = 0;
+            Open = false;
+            Questions = new List<QuestionBase>();
+            Slides = new List<Slide>();
+        }
+
+        #endregion Public Constructors
+
         #region Public Methods
 
         public void AddClientInput(object clientInput)
@@ -43,6 +55,17 @@ namespace Slagkraft.Models.Admin
                     Choice.AddUserVote(Multi);
                 }
             }
+        }
+
+        public void AddQuestion(QuestionBase question)
+        {
+            question.Index = Questions.Count;
+            if (question is OpenText)
+                question.QuestionType = QuestionBase.Type.OpenText;
+            else if (question is MultipleChoice)
+                question.QuestionType = QuestionBase.Type.MultipleChoice;
+
+            Questions.Add(question);
         }
 
         public QuestionBase GetActiveQuestion()

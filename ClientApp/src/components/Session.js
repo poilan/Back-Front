@@ -30,6 +30,7 @@ const BannerArrow = styled.div`
     position: absolute;
     &:hover {
         cursor: pointer;
+        margin-left: 7.5px;
     };
 `;
 
@@ -72,29 +73,51 @@ const CardHeader = styled(Card.Header)`
     width: 100%;
     background: #fff;
     height: 50px;
+    top: 0;
+    position: absolute;
 `;
 
 const HeaderTabs = styled(Nav)`
     left: 5%;
     position: absolute;
+    height: 100%;
+    top: 0;
     .nav-link {
         width: 175px;
         max-width: 33%;
         text-align: center;
+        top: 0;
+        height: 100%;
         color: black;
-        padding: 5px;
+        padding: 15px;
         font-family: CircularStd;
         font-weight: 600;
 
+        &:hover {
+            border: 0;           
+            background: #4C7AD3;
+            padding-top: 12.5px;
+        }
+
         &.active {
             border: 0;
+            opacity: 100%;
+            color: black;
             border-bottom: 4px solid #4C7AD3;
+            cursor: default;
+            background: #FFF;
+            padding-top: 15px;
+            
         };
     };
 `;
 
 const CardBody = styled(Card.Body)`
     background: #E4E4E4;
+    position: absolute;
+    top: 50px;
+    width: 100%;
+    min-height: calc(100vh - 126px);
 `;
 
 const SlidesOverview = styled.div`
@@ -105,31 +128,42 @@ const SlidesOverview = styled.div`
     border-radius: 10px;
     display: inline-block;
     position: absolute;
+    overflow: auto;
     left: 5%;
-    padding: 40px 25px;
-`;
+    padding: 0px 25px;
+
+    scrollbar-width: thin;
+    scrollbar-color: #4C7AD3 #fff;
+`; //Scrollbar only affects firefox currently
 
 const SlideCategory = styled.div`
     border-radius: 20px;
     border: 2px solid black;
+    margin-top: 5%;
+    margin-bottom: 5%;
     position: relative;
     font-size: 1rem;
     font-family: CircularStd;
     font-weight: 600;
     padding: 10px;
 
+    &:hover {
+        cursor: pointer;
+    };
+
 `;
 
 const NewSlide = styled(SlideCategory)`
     opacity: 50%;
     &:hover {
-        cursor: pointer;
+        opacity: 75%;
     };
 `;
 
 const SelectedSlide = styled(SlidesOverview)`
     left: 26%;
     width: 69%;
+    padding: 0;
 `;
 
 const SlideTitle = styled.h1`
@@ -173,10 +207,20 @@ const Question = styled.div`
     border-radius: 10px;
     position: relative;
     font-family: CircularStd;
-    font-weight: 420;
+    font-weight: 420;    
+    border: 1px solid black;
+    opacity: 90%;
 
     &:hover {
         cursor:pointer;
+        opacity: 100%;
+    }
+`;
+
+const NewQuestion = styled(Question)`
+    opacity: 50%;
+    &:hover {
+        opacity: 80%;
     }
 `;
 
@@ -185,24 +229,47 @@ export class Session extends Component {
         super(props);
         this.state = {
             title: '',
-            code: '',
-            slides: [],
-            slide: 0,
+            code: 0,
             questions: [],
             question: 0,
-            questSelect: false,
+            organizing: false,
         }
 
         this.selectTab = this.selectTab.bind(this);
-        this.selectSlide = this.selectSlide.bind(this);
+        this.selectSlide = this.selectQuestion.bind(this);
+        this.backToProjects = this.backToProjects.bind(this);
+        this.createQuestion = this.createQuestion.bind(this);
     }
 
     componentWillMount() {
         var code = sessionStorage.getItem("code");
         var title = sessionStorage.getItem("title");
-        this.setState({
-            code: code,
-            title: title,
+        this.state.code = code;
+        this.state.title = title;
+
+        this.getQuestions();
+
+    }
+
+    async getQuestions() {
+        const code = this.state.code;
+        await axios.get(`admin/${code}/questions-all`).then(res => {
+            if (res.status === 202) {
+                this.setState({ questions: res.data });
+            } else if (res.status === 404) {
+                //session not found
+            }
+        })
+    }
+
+    async getSlides() { //Perhaps not needed
+        const code = this.state.code;
+        await axios.get(`admin/${code}/slides-all`).then(res => {
+            if (res.status === 202) {
+                this.setState({ slides: res.data });
+            } else if (res.status === 404) {
+                //session not found
+            }
         })
     }
 
@@ -212,9 +279,9 @@ export class Session extends Component {
         });
     }
 
-    selectSlide(key) {
+    selectQuestion(key) {
         this.setState({
-            slide: key,
+            question: key,
         });
     }
 
@@ -225,21 +292,33 @@ export class Session extends Component {
         return (
             <>
                 <SlidesOverview>
-                    {//this.state.slides.map(slide =>
-                        //<SlideCategory key="slide.index" onSelect={this.selectSlide}>{slide.index + '. ' + slide.title}</SlideCategory>)
+                    {this.state.questions.map(question =>
+                        <SlideCategory id={question.index} onSelect={this.selectQuestion}>{(question.Index + 1) + '. ' + question.title}</SlideCategory>)
                     }
                     <NewSlide>➕ Create new slide</NewSlide>
                 </SlidesOverview>
-                <SelectedSlide>
-                    <SlideBody>
-                        And as the body I just wanted to say fuck you and hope I make it difficult!
-                    </SlideBody>
-                    <SlideTitle>
-                        Hello there, I am the title.
-                    </SlideTitle>
-                </SelectedSlide>
+                {this.activeSlide()}
             </>
         );
+    }
+
+    activeSlide() {
+        var question = this.state.questions[this.state.question];
+
+        if (question !== undefined && question.questionType === 0) {
+
+        }
+        else if (question !== undefined && question.questionType === 1) {
+
+        }
+        else {
+            return (
+                <SelectedSlide>
+                    <SlideTitle>Hello there, I am the title</SlideTitle>
+                    <SlideBody>As the body I just want to make it difficult</SlideBody>
+                </SelectedSlide>
+            );
+        }
     }
 
     organizingTab() {
@@ -249,22 +328,27 @@ export class Session extends Component {
             return (
                 <QuestionContainer>
                     <Overview>Overview</Overview>
-                    {//this.state.questions.map(question =>
-                        //<Question>{question.index + 1}. {question.title}</Question>)
-                    }
-                    <Question>1. What type of animal is the most versatile?</Question>
-                    <Question>2. Which animals belong to that group?</Question>
-                    <Question>3. Which of these animals could take on all the other options in a fight?</Question>
+                    {this.state.questions.map(question =>
+                        <Question id={question.index}>{question.index + 1}. {question.title}</Question>)}
+                    <NewQuestion onClick={this.createQuestion}>➕ Create new question </NewQuestion>
                 </QuestionContainer>
             );
         }
+    }
+
+    createQuestion() {
+        this.props.history.go(-1);
+    }
+
+    backToProjects() {
+        this.props.history.go(-1);
     }
 
     render() {
         return (
             <MainContainer>
                 <Banner>
-                    <BannerArrow>⟵</BannerArrow>
+                    <BannerArrow onClick={this.backToProjects}>⟵</BannerArrow>
                     <BannerText>{this.state.title}</BannerText>
                     <BannerCode>{"#" + this.state.code.substr(0, 3) + " " + this.state.code.substr(3, 3)}</BannerCode>
                     <BannerButton title="Presentation">
